@@ -36,15 +36,16 @@ jobs:
         shell: bash
         run: |
           all_services=(catalogue user cart shipping ratings payment dispatch mongodb)
-          changed_services=()
-          frontend_changed=false
+            changed_services=()
+            frontend_changed=false
           if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
             changed_services=("${all_services[@]}")
             frontend_changed=true
-          else
-            while IFS= read -r file; do
-              service="${file%%/*}"
-              if [[ "$file" == web/static/* ]]; then
+            else
+              while IFS= read -r file; do
+              source_path="${file#app/}"
+              service="${source_path%%/*}"
+              if [[ "$file" == app/web/static/* ]]; then
                 frontend_changed=true
               fi
               for allowed in "${all_services[@]}"; do
@@ -91,7 +92,7 @@ jobs:
           # ECR repository and Helm chart use the existing rs-mongo name.
           ECR_SERVICE="$SERVICE"
           if [[ "$SERVICE" == "mongodb" ]]; then ECR_SERVICE="mongo"; fi
-          docker build --tag "$ECR_REGISTRY/rs-$ECR_SERVICE:$IMAGE_TAG" "./$SERVICE"
+          docker build --tag "$ECR_REGISTRY/rs-$ECR_SERVICE:$IMAGE_TAG" "./app/$SERVICE"
           docker push "$ECR_REGISTRY/rs-$ECR_SERVICE:$IMAGE_TAG"
 
   deploy:
@@ -149,7 +150,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Upload static frontend files
-        run: aws s3 sync ./web/static "s3://${{ vars.FRONTEND_S3_BUCKET }}" --delete
+        run: aws s3 sync ./app/web/static "s3://${{ vars.FRONTEND_S3_BUCKET }}" --delete
 
       - name: Clear CloudFront cached frontend files
         if: vars.CLOUDFRONT_DISTRIBUTION_ID != ''
