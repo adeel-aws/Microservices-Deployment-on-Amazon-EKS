@@ -1,4 +1,5 @@
 const instana = require('@instana/collector');
+// Catalogue API entry point.
 // init tracing
 // MUST be done before loading anything else!
 instana({
@@ -185,4 +186,3 @@ const port = process.env.CATALOGUE_SERVER_PORT || '8080';
 app.listen(port, () => {
     logger.info('Started on port', port);
 });
-
