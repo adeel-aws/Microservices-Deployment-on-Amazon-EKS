@@ -1,0 +1,28 @@
+﻿<section class="page">
+  <div class="breadcrumb"><a href="/">Home</a> / Search</div>
+  <span class="eyebrow">LET’S FIND YOUR MATCH</span>
+  <h1>Search the collection.</h1>
+  <div class="empty-state" ng-if="!data.searchResults.length">
+    <h2>No companions found.</h2>
+    <p>Try another name or explore the full collection.</p>
+    <a class="button" href="/#collection">See all robots ↗</a>
+  </div>
+  <div class="product-grid">
+    <a
+      class="product-card"
+      ng-repeat="item in data.searchResults"
+      ng-href="/product/{{ item.sku }}"
+      ><div class="product-visual">
+        <img ng-src="/images/{{ item.sku }}.png" alt="{{ item.name }}" /><span
+          class="product-arrow"
+          >↗</span
+        >
+      </div>
+      <div class="product-meta">
+        <h3>{{ item.name }}</h3>
+        <p>{{ item.description }}</p>
+        <strong>{{ item.price | currency:'€' }}</strong>
+      </div></a
+    >
+  </div>
+</section>

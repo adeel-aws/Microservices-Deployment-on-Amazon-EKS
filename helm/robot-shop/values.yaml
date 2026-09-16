@@ -1,0 +1,83 @@
+namespace: robot-shop
+
+imageRegistry: ""
+imageTag: latest
+runtimeSecretName: robot-shop-runtime
+
+mongodb:
+  image: rs-mongo
+  imageTag: ""
+  storage: 5Gi
+  storageClass: gp2
+
+services:
+  catalogue:
+    image: rs-catalogue
+    port: 8080
+    replicas: 2
+    healthPath: /health
+    env: {}
+    secretEnv:
+      MONGO_URL: catalogue-mongo-url
+  user:
+    image: rs-user
+    port: 8080
+    replicas: 2
+    healthPath: /health
+    env:
+      REDIS_TLS: "true"
+      REDIS_PORT: "6379"
+    secretEnv:
+      MONGO_URL: user-mongo-url
+      REDIS_HOST: redis-host
+      REDIS_AUTH_TOKEN: redis-auth-token
+  cart:
+    image: rs-cart
+    port: 8080
+    replicas: 2
+    healthPath: /health
+    env:
+      CATALOGUE_HOST: catalogue
+      REDIS_TLS: "true"
+      REDIS_PORT: "6379"
+    secretEnv:
+      REDIS_HOST: redis-host
+      REDIS_AUTH_TOKEN: redis-auth-token
+  shipping:
+    image: rs-shipping
+    port: 8080
+    replicas: 2
+    healthPath: /health
+    env:
+      DB_HOST: "robot-shop-prod-mysql.cepccos20qy8.us-east-1.rds.amazonaws.com"
+      CART_ENDPOINT: "cart:8080"
+    secretEnv:
+      DB_USERNAME: shipping-db-username
+      DB_PASSWORD: shipping-db-password
+  ratings:
+    image: rs-ratings
+    port: 80
+    replicas: 2
+    healthPath: /_health
+    env:
+      PDO_URL: "mysql:host=robot-shop-prod-mysql.cepccos20qy8.us-east-1.rds.amazonaws.com;dbname=ratings;charset=utf8mb4"
+      CATALOGUE_URL: "http://catalogue:8080"
+    secretEnv:
+      DB_USERNAME: ratings-db-username
+      DB_PASSWORD: ratings-db-password
+  payment:
+    image: rs-payment
+    port: 8080
+    replicas: 2
+    healthPath: /health
+    env:
+      CART_HOST: cart
+      USER_HOST: user
+    secretEnv:
+      AMQP_URL: rabbitmq-amqps-url
+  dispatch:
+    image: rs-dispatch
+    replicas: 1
+    env: {}
+    secretEnv:
+      AMQP_URL: rabbitmq-amqps-url

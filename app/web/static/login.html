@@ -1,0 +1,135 @@
+﻿<section class="account-page">
+  <div class="account-story" ng-if="!data.user.name">
+    <span class="eyebrow">GOOD COMPANY STARTS HERE</span>
+    <h1>A place for you.<br />And your next<br /><em>great companion.</em></h1>
+    <p>
+      Big thinkers, everyday helpers, and a little more possibility. Welcome to
+      your world of robots.
+    </p>
+    <div class="account-illustration">
+      <span aria-hidden="true">hi.</span
+      ><img
+        src="/images/SHCE.png"
+        alt="A friendly robot welcoming you to Stan’s"
+      />
+    </div>
+    <a class="text-link" href="/">Just looking? Explore the collection ↗</a>
+  </div>
+  <div class="account-content" ng-if="!data.user.name">
+    <div class="account-form-wrap">
+      <span class="eyebrow">HELLO, YOU.</span>
+      <h2>{{ data.registering ? 'Meet your tomorrow.' : 'Welcome back.' }}</h2>
+      <p>
+        {{ data.registering ? 'Create your account. Make yourself at home.' :
+        'Your next adventure is right where you left it.' }}
+      </p>
+      <div class="auth-switch" role="group" aria-label="Account options">
+        <button
+          type="button"
+          ng-class="{active: !data.registering}"
+          ng-attr-aria-pressed="{{ !data.registering }}"
+          ng-click="data.registering = false; data.message = ''"
+        >
+          Sign in</button
+        ><button
+          type="button"
+          ng-class="{active: data.registering}"
+          ng-attr-aria-pressed="{{ data.registering }}"
+          ng-click="data.registering = true; data.message = ''"
+        >
+          Create account
+        </button>
+      </div>
+      <div class="message" role="alert" ng-if="data.message">
+        {{ data.message }}
+      </div>
+      <form ng-if="!data.registering" ng-submit="login()">
+        <label class="field"
+          >Username<input
+            required
+            autocomplete="username"
+            placeholder="Your username"
+            ng-model="data.name" /></label
+        ><label class="field"
+          >Password<input
+            required
+            type="password"
+            autocomplete="current-password"
+            placeholder="Your password"
+            ng-model="data.password" /></label
+        ><button class="auth-submit">Sign in →</button>
+      </form>
+      <form ng-if="data.registering" ng-submit="register()">
+        <label class="field"
+          >Username<input
+            required
+            autocomplete="username"
+            placeholder="Choose a username"
+            ng-model="data.name" /></label
+        ><label class="field"
+          >Email<input
+            required
+            type="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            ng-model="data.email" /></label
+        ><label class="field"
+          >Password<input
+            required
+            type="password"
+            autocomplete="new-password"
+            placeholder="Choose a password"
+            ng-model="data.password" /></label
+        ><label class="field"
+          >Confirm password<input
+            required
+            type="password"
+            autocomplete="new-password"
+            placeholder="Enter your password again"
+            ng-model="data.password2" /></label
+        ><button class="auth-submit">Create your account →</button>
+      </form>
+      <p class="account-guest">
+        No account needed to look around.<br /><a href="/"
+          >Continue exploring as a guest ↗</a
+        >
+      </p>
+    </div>
+  </div>
+  <div class="page account-dashboard" ng-if="data.user.name">
+    <span class="eyebrow">YOUR LITTLE CORNER OF TOMORROW</span>
+    <h1>Welcome back, {{ data.user.name }}.</h1>
+    <p>{{ data.user.email }}</p>
+    <div class="panel">
+      <h2>Your order history</h2>
+      <div class="empty-state" ng-if="!data.orderHistory.length">
+        <h3>Your story is just getting started.</h3>
+        <p>Find your first companion. Your orders will appear here.</p>
+        <a class="button" href="/#collection">Explore the collection ↗</a>
+      </div>
+      <div class="order-table" ng-if="data.orderHistory.length">
+        <table>
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Companions</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="hist in data.orderHistory">
+              <td>{{ hist.orderid }}</td>
+              <td>
+                <div ng-repeat="item in hist.cart.items">{{ item.name }}</div>
+              </td>
+              <td>{{ hist.cart.total | currency:'€' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <a class="text-link account-continue" href="/#collection"
+      >Continue shopping ↗</a
+    >
+  </div>
+</section>

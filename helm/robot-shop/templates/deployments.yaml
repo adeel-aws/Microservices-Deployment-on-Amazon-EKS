@@ -1,0 +1,57 @@
+{{- range $name, $service := .Values.services }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  replicas: {{ $service.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      containers:
+        - name: {{ $name }}
+          image: "{{ $.Values.imageRegistry }}/{{ $service.image }}:{{ default $.Values.imageTag $service.imageTag }}"
+          imagePullPolicy: Always
+          {{- if $service.port }}
+          ports:
+            - containerPort: {{ $service.port }}
+          {{- end }}
+          env:
+            {{- range $key, $value := $service.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range $key, $secretKey := $service.secretEnv }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.runtimeSecretName }}
+                  key: {{ $secretKey }}
+            {{- end }}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          {{- if $service.healthPath }}
+          readinessProbe:
+            httpGet:
+              path: {{ $service.healthPath }}
+              port: {{ $service.port }}
+            initialDelaySeconds: 20
+          livenessProbe:
+            httpGet:
+              path: {{ $service.healthPath }}
+              port: {{ $service.port }}
+            initialDelaySeconds: 60
+          {{- end }}
+---
+{{- end }}

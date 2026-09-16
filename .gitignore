@@ -1,0 +1,23 @@
+# Terraform state and local configuration
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars
+!terraform/terraform.tfvars.example
+terraform/*.tfplan
+terraform/*.log
+
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+kubeconfig
+*.kubeconfig
+
+# Tooling and operating-system files
+.DS_Store
+Thumbs.db
+**/__pycache__/
+**/.pytest_cache/

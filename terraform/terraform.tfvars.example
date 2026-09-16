@@ -1,0 +1,6 @@
+aws_region           = "us-east-1"
+owner                = "Adeel"
+domain_name          = "adeeltech.bar"
+frontend_bucket_name = "robot-shop-microservices-frontend-bucket-9876"
+github_oidc_subject  = "repo:YOUR_ORG/YOUR_REPOSITORY:ref:refs/heads/main"
+rds_mysql_backup_retention_period = 1

@@ -1,0 +1,156 @@
+name: Build and deploy Robot Shop
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# GitHub creates a short-lived OIDC token. AWS exchanges it for the Terraform
+# created role, so this repository stores no AWS access keys.
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+  EKS_CLUSTER_NAME: robot-shop-prod
+  HELM_RELEASE: robot-shop
+  HELM_NAMESPACE: robot-shop
+
+jobs:
+  detect-changed-services:
+    name: Find changed services
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.changed.outputs.services }}
+      frontend: ${{ steps.changed.outputs.frontend }}
+    steps:
+      - name: Download recent Git history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Create the list of services to release
+        id: changed
+        shell: bash
+        run: |
+          all_services=(catalogue user cart shipping ratings payment dispatch mongodb)
+          changed_services=()
+          frontend_changed=false
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
+            changed_services=("${all_services[@]}")
+            frontend_changed=true
+          else
+            while IFS= read -r file; do
+              service="${file%%/*}"
+              if [[ "$file" == web/static/* ]]; then
+                frontend_changed=true
+              fi
+              for allowed in "${all_services[@]}"; do
+                if [[ "$service" == "$allowed" && ! " ${changed_services[*]} " =~ " $service " ]]; then
+                  changed_services+=("$service")
+                fi
+              done
+            done < <(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}")
+          fi
+          services_json=$(printf '%s\n' "${changed_services[@]}" | jq -R . | jq -sc .)
+          echo "services=$services_json" >> "$GITHUB_OUTPUT"
+          echo "frontend=$frontend_changed" >> "$GITHUB_OUTPUT"
+
+  build-and-push:
+    name: Build and push ${{ matrix.service }}
+    needs: detect-changed-services
+    if: needs.detect-changed-services.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.detect-changed-services.outputs.services) }}
+    steps:
+      - name: Download application code
+        uses: actions/checkout@v4
+
+      - name: Get temporary AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sign in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          SERVICE: ${{ matrix.service }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # The restored source calls this directory mongodb; the established
+          # ECR repository and Helm chart use the existing rs-mongo name.
+          ECR_SERVICE="$SERVICE"
+          if [[ "$SERVICE" == "mongodb" ]]; then ECR_SERVICE="mongo"; fi
+          docker build --tag "$ECR_REGISTRY/rs-$ECR_SERVICE:$IMAGE_TAG" "./$SERVICE"
+          docker push "$ECR_REGISTRY/rs-$ECR_SERVICE:$IMAGE_TAG"
+
+  deploy:
+    name: Rolling deploy to EKS
+    needs: [detect-changed-services, build-and-push]
+    if: vars.ROBOT_SHOP_DEPLOY_ENABLED == 'true' && needs.detect-changed-services.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Download application code and Helm chart
+        uses: actions/checkout@v4
+
+      - name: Get temporary AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure kubectl for EKS
+        run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Deploy only the changed services with rolling updates
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          CHANGED_SERVICES: ${{ needs.detect-changed-services.outputs.services }}
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          ECR_REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+          arguments=(upgrade --install "$HELM_RELEASE" ./helm/robot-shop --namespace "$HELM_NAMESPACE" --create-namespace --set "imageRegistry=$ECR_REGISTRY" --wait --timeout 10m)
+          for service in $(echo "$CHANGED_SERVICES" | jq -r '.[]'); do
+            if [[ "$service" == "mongodb" ]]; then
+              arguments+=(--set "mongodb.imageTag=$IMAGE_TAG")
+            else
+              arguments+=(--set "services.$service.imageTag=$IMAGE_TAG")
+            fi
+          done
+          helm "${arguments[@]}"
+
+  deploy-frontend:
+    name: Upload frontend to S3
+    needs: detect-changed-services
+    if: needs.detect-changed-services.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download frontend files
+        uses: actions/checkout@v4
+
+      - name: Get temporary AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload static frontend files
+        run: aws s3 sync ./web/static "s3://${{ vars.FRONTEND_S3_BUCKET }}" --delete
+
+      - name: Clear CloudFront cached frontend files
+        if: vars.CLOUDFRONT_DISTRIBUTION_ID != ''
+        run: aws cloudfront create-invalidation --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" --paths "/*"

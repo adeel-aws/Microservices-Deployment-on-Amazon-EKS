@@ -1,0 +1,41 @@
+﻿<section class="page narrow">
+  <div class="steps">
+    <a href="/cart">01 Bag</a><b>02 Shipping</b><span>03 Review</span>
+  </div>
+  <span class="eyebrow">THE NEXT STOP: YOUR WORLD</span>
+  <h1>Where are we headed?</h1>
+  <div class="panel">
+    <h2>Shipping details</h2>
+    <p>Choose your country and select a city from the suggestions.</p>
+    <label class="field"
+      >Country<select
+        ng-change="countryChanged()"
+        ng-model="data.selectedCountry"
+        ng-options="opt.name for opt in data.countries track by opt.code"
+      >
+        <option value="">Select a country</option>
+      </select></label
+    ><label class="field"
+      >City<input
+        id="location"
+        type="text"
+        placeholder="Start typing your city…"
+        autocomplete="off"
+        ng-model="data.selectedLocation"
+        ng-disabled="data.disableCity" /></label
+    ><button ng-click="calcShipping()" ng-disabled="data.disableCalc">
+      Calculate shipping →
+    </button>
+    <div ng-if="data.shipping">
+      <div class="summary-line">
+        <span>Distance</span
+        ><span>{{ data.shipping.distance | number:0 }} km</span>
+      </div>
+      <div class="summary-line total">
+        <span>Shipping</span
+        ><span>{{ data.shipping.cost | currency:'€' }}</span>
+      </div>
+      <button ng-click="confirmShipping()">Continue to review →</button>
+    </div>
+  </div>
+</section>

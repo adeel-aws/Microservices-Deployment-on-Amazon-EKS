@@ -1,0 +1,40 @@
+﻿<section class="page narrow">
+  <div class="steps">
+    <a href="/cart">01 Bag</a><a href="/shipping">02 Shipping</a
+    ><b>03 Review</b>
+  </div>
+  <div ng-if="!data.cont">
+    <span class="eyebrow">ONE LAST LOOK</span>
+    <h1>Almost in good company.</h1>
+    <div class="panel" ng-if="data.cart.total">
+      <h2>Your order</h2>
+      <div class="summary-line" ng-repeat="item in data.cart.items">
+        <span>{{ item.qty }} × {{ item.name }}</span
+        ><strong>{{ item.subtotal | currency:'€' }}</strong>
+      </div>
+      <div class="summary-line">
+        <span>Included tax</span><span>{{ data.cart.tax | currency:'€' }}</span>
+      </div>
+      <div class="summary-line total">
+        <span>Total</span><span>{{ data.cart.total | currency:'€' }}</span>
+      </div>
+      <p class="muted">This is a demo checkout. No card details are needed.</p>
+      <button ng-disabled="data.buttonDisabled" ng-click="pay()">
+        {{ data.buttonDisabled ? 'Placing your order…' : 'Place order →' }}
+      </button>
+    </div>
+    <div class="empty-state" ng-if="!data.cart.total">
+      <p>Your bag is empty.</p>
+      <a class="button" href="/#collection">Explore the collection</a>
+    </div>
+  </div>
+  <div class="empty-state" ng-if="data.cont">
+    <span class="success-mark">✓</span>
+    <h1>Hello, new adventures.</h1>
+    <p>Thank you! Your order has been placed.</p>
+    <a class="button" href="/#collection">Continue exploring ↗</a>
+  </div>
+  <div class="message" role="status" ng-if="data.message.trim()">
+    {{ data.message }}
+  </div>
+</section>
