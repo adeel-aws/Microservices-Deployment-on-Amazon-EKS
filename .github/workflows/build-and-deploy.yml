@@ -55,7 +55,11 @@ jobs:
               done
             done < <(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}")
           fi
-          services_json=$(printf '%s\n' "${changed_services[@]}" | jq -R . | jq -sc .)
+          if ((${#changed_services[@]})); then
+            services_json=$(printf '%s\n' "${changed_services[@]}" | jq -R . | jq -sc .)
+          else
+            services_json='[]'
+          fi
           echo "services=$services_json" >> "$GITHUB_OUTPUT"
           echo "frontend=$frontend_changed" >> "$GITHUB_OUTPUT"
 
