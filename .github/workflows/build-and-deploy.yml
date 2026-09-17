@@ -149,14 +149,38 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           CHANGED_SERVICES: ${{ needs.detect-changed-services.outputs.services }}
         run: |
+          set -euo pipefail
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           ECR_REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
           arguments=(upgrade --install "$HELM_RELEASE" ./helm/robot-shop --namespace "$HELM_NAMESPACE" --create-namespace --set "imageRegistry=$ECR_REGISTRY" --wait --timeout 10m)
+
+          services=(cart catalogue dispatch payment ratings shipping user mongodb)
+          for service in "${services[@]}"; do
+            if [[ "$service" == "mongodb" ]]; then
+              workload="statefulset/mongodb"
+            else
+              workload="deployment/$service"
+            fi
+
+            image=$(kubectl get "$workload" --namespace "$HELM_NAMESPACE" --output jsonpath='{.spec.template.spec.containers[0].image}')
+            tag="${image##*:}"
+            if [[ -z "$image" || "$tag" == "$image" || "$tag" == */* ]]; then
+              echo "Unable to retrieve an image tag from $workload: $image" >&2
+              exit 1
+            fi
+
+            if [[ "$service" == "mongodb" ]]; then
+              arguments+=(--set-string "mongodb.imageTag=$tag")
+            else
+              arguments+=(--set-string "services.$service.imageTag=$tag")
+            fi
+          done
+
           for service in $(echo "$CHANGED_SERVICES" | jq -r '.[]'); do
             if [[ "$service" == "mongodb" ]]; then
-              arguments+=(--set "mongodb.imageTag=$IMAGE_TAG")
+              arguments+=(--set-string "mongodb.imageTag=$IMAGE_TAG")
             else
-              arguments+=(--set "services.$service.imageTag=$IMAGE_TAG")
+              arguments+=(--set-string "services.$service.imageTag=$IMAGE_TAG")
             fi
           done
           helm "${arguments[@]}"
