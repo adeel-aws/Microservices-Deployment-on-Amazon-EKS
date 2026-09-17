@@ -7,7 +7,10 @@ module "github_deploy_role" {
   source   = "terraform-aws-modules/iam/aws//modules/iam-github-oidc-role"
   version  = "~> 5.0"
   name     = "${local.name}-github-deploy"
-  subjects = [var.github_oidc_subject]
+  subjects = [
+    "repo:adeel-aws@255076140/Microservices-Deployment-on-Amazon-EKS@1362345295:ref:refs/heads/main",
+    "repo:adeel-aws@255076140/Microservices-Deployment-on-Amazon-EKS@1362345295:environment:production",
+  ]
   policies = {
     ecr = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
     eks = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
@@ -38,6 +41,11 @@ resource "aws_iam_role_policy" "github_frontend_deploy" {
         Effect   = "Allow"
         Action   = ["cloudfront:CreateInvalidation"]
         Resource = module.cloudfront.cloudfront_distribution_arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["eks:DescribeCluster"]
+        Resource = "arn:aws:eks:us-east-1:380648615311:cluster/robot-shop-prod"
       }
     ]
   })
