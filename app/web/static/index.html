@@ -1,11 +1,11 @@
-ï»¿<!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <!--# include file="eum.html" -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <base href="/" />
-    <title>Stanâ€™s â€” Your next great companion</title>
+    <title>Stan’s — Your next great companion</title>
     <link rel="stylesheet" href="/css/style.css" />
     <link rel="stylesheet" href="/css/auto-complete.css" />
   </head>
@@ -14,34 +14,34 @@
     <div ng-controller="shopform" ng-cloak>
       <div class="announcement">
         A little more possibility. A lot more robot.
-        <span>Meet your next companion â†—</span>
+        <span>Meet your next companion ?</span>
       </div>
       <header class="site-header">
         <a class="brand" href="/"
-          ><b>s.</b> stanâ€™s <small>ROBOT<br />SHOP</small></a
+          ><b>s.</b> stan’s <small>ROBOT<br />SHOP</small></a
         >
         <nav aria-label="Main navigation">
           <a href="/#collection">Shop robots</a><a href="/#about">Our world</a>
         </nav>
         <form class="search-box" ng-submit="search()">
-          <span>âŒ•</span
+          <span>?</span
           ><input
             aria-label="Search robots"
-            placeholder="Find your robotâ€¦"
+            placeholder="Find your robot…"
             ng-model="data.searchText"
-          /><button aria-label="Search">â†—</button>
+          /><button aria-label="Search">?</button>
         </form>
         <a class="account-link" href="/login"
           >{{ account.user.name ? 'My account' : 'Sign in' }}</a
         ><a class="bag" href="/cart"
-          >Bag <span>{{ data.cart.total | currency:'â‚¬' }}</span></a
+          >Bag <span>{{ data.cart.total | currency:'€' }}</span></a
         >
       </header>
       <main id="main-content" tabindex="-1" ng-view></main>
       <footer id="about">
         <div>
           <a class="brand" href="/"
-            >stanâ€™s <small>ROBOT<br />SHOP</small></a
+            >stan’s <small>ROBOT<br />SHOP</small></a
           >
           <p>Extraordinary machines.<br />A little more human.</p>
         </div>
@@ -55,7 +55,7 @@
           <p>A home for curious minds<br />and their future companions.</p>
         </div>
         <div class="footer-bottom">
-          Â© 2026 Stanâ€™s Robot Shop
+          © 2026 Stan’s Robot Shop
           <span>Built for a world of possibilities.</span>
         </div>
       </footer>
@@ -67,5 +67,4 @@
     <script src="/js/storefront.js"></script>
   </body>
 </html>
-<!-- CI/CD deployment test -->
 <!-- CI/CD full deployment test -->
