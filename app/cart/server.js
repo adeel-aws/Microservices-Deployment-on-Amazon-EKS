@@ -396,7 +396,7 @@ var redisOptions = {
 };
 
 if(redisAuthToken) {
-    redisOptions.password = redisAuthToken;
+    redisOptions.auth_pass = redisAuthToken;
 }
 
 if(redisTls) {
