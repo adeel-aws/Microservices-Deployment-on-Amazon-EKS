@@ -392,7 +392,8 @@ function saveCart(id, cart) {
 // connect to Redis
 var redisOptions = {
     host: redisHost,
-    port: redisPort
+    port: redisPort,
+    no_ready_check: true
 };
 
 if(redisAuthToken) {
