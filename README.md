@@ -97,7 +97,19 @@ app/        → application source, Dockerfiles, and GitHub Actions workflow
 
 ## Application preview
 
-Add storefront images to [Screenshots/](Screenshots/) and reference them here when available.
+### Storefront
+
+![Robot Shop welcome page](Screenshots/welcome_page.png)
+
+![Robot Shop product collection](Screenshots/collection.png)
+
+![Robot Shop dashboard](Screenshots/dashboard.png)
+
+### Deployment evidence
+
+![GitHub Actions deployment pipeline](Screenshots/pipeline.png)
+
+![Robot Shop workloads running on EKS](Screenshots/running-pods-cmd.png)
 
 ## Project flow
 
