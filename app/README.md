@@ -66,3 +66,5 @@ kubectl get pods,svc,ingress -n robot-shop
 ```
 
 For a local source build, each service has its own Dockerfile. Do not place production credentials in local `.env` files that will be committed.
+
+<!-- CI/CD deployment test -->
