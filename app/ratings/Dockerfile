@@ -3,7 +3,11 @@
 #
 FROM php:7.4-apache
 
-RUN apt-get update && apt-get install -yqq unzip libzip-dev \
+RUN sed -i -e 's|deb.debian.org/debian|archive.debian.org/debian|g' \
+    -e 's|security.debian.org/debian-security|archive.debian.org/debian-security|g' \
+    -e '/bullseye-updates/d' /etc/apt/sources.list \
+    && apt-get -o Acquire::Check-Valid-Until=false update \
+    && apt-get install -yqq unzip libzip-dev \
     && docker-php-ext-install pdo_mysql opcache zip
 
 # Enable AutoProfile for PHP which is currently opt-in beta
@@ -28,4 +32,3 @@ RUN composer install
 RUN rm -Rf /var/www/var/*
 RUN chown -R www-data /var/www
 RUN chmod -R 777 /var/www
-
